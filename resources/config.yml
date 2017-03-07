@@ -1,0 +1,6 @@
+---
+# Author: RTGDaCoder
+version: 1.0.0
+jcmd:
+    - tell {player} you are awesome!
+...
