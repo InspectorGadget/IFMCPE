@@ -93,9 +93,57 @@ class Loader extends PluginBase implements Listener {
                                             else {
                                                 $this->args($sender);
                                             }
-                                        
+                                            
+                                            return true;
+                                            
                                     }
                                       
+                                }
+                                else {
+                                    $this->args($sender);
+                                }
+                                
+                                return true;
+                                
+                            case "list":
+                                
+                                $c = $this->config->get("jcmd");
+                                
+                                    foreach($c as $list) {
+                                        
+                                        if(count($c) > 0) {
+                                        
+                                            $sender->sendMessage(" -- Your Commands! -- ");
+                                            $sender->sendMessage($list);
+                                        
+                                        }
+                                        else {
+                                            $sender->sendMessage(TF::RED . "You have 0 commands!");
+                                        }
+                                        
+                                    }
+                                    
+                                return true;
+                            
+                            case "rm":
+                                
+                                if(isset($args[1])) {
+                                    
+                                    $l = implode(" ", array_splice($args, 1));
+                                    $c = $this->config->get("jcmd");
+                                        
+                                        if(in_array($l, $c)) {
+                                            
+                                            unset($c[array_search($l, $c)]);
+                                            $this->config->set('jcmd', $c);
+                                            $this->config->save();
+                                            $sender->sendMessage("You have removed " . TF::GREEN . $l . TF::RESET . " from the list!");
+                                            
+                                        }
+                                        else {
+                                            $sender->sendMessage(TF::GREEN . $l . TF::RESET . " isnt in the list!");
+                                        }
+                                         
                                 }
                                 else {
                                     $this->args($sender);
@@ -119,13 +167,17 @@ class Loader extends PluginBase implements Listener {
     
     public function args($p) {
         
-        $p->sendMessage(" -- Invalid Args -- ");
+        $p->sendMessage(TF::YELLOW . " -- Invalid Args -- ");
+        $p->sendMessage(TF::RED . "You can use {player}, this acts as all players!");
+        $p->sendMessage(TF::GREEN . "You can also send this commands to individual players by replacing {player} with their name!");
         $p->sendMessage("/if event [join] [what to do?]");
+        $p->sendMessage("/if list - lists all your saved commands!");
+        $p->sendMessage("/if rm [command] - removes your command!");
         
     }
     
     public function onDisable() {
-        $this->config()->save();
+        $this->config->save();
     }
     
 }
