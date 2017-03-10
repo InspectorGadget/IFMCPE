@@ -32,22 +32,24 @@ use pocketmine\event\player\PlayerJoinEvent;
 
 class Loader extends PluginBase implements Listener {
     
+    public $config;
+
     public function onEnable() {
         
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
         $this->saveDefaultConfig();
-        
-        $cfg = $this->getConfig()->getAll();
+        $this->config = new Config($this->getDataFolder() . "config.yml");
         
     }
     
     public function onJoin(PlayerJoinEvent $e) {
         
+        $cfg = $this->config->getAll();
         $p = $e->getPlayer();
         
-            foreach($cfg["jcmd"] as $cmd) {
+            foreach($cfg['jcmd'] as $cmd) {
                 
-                $this->getServer()->dispatchCommand(new \pocketmine\command\ConsoleCommandSender(), str_replace("{player}", $e->getPlayer(), $cmd));
+                $this->getServer()->dispatchCommand(new \pocketmine\command\ConsoleCommandSender(), str_replace("{player}", $p->getName(), $cmd));
                 
             }
         
@@ -55,51 +57,72 @@ class Loader extends PluginBase implements Listener {
     
     public function onCommand(CommandSender $sender, Command $command, $label, array $args) {
         
-        switch (strtolower($command->getName())) {
+        switch(strtolower($command->getName())) {
             
             case "if":
                 
-                if(!$sender->hasPermission("ifmcpe.command")) {
-                    $sender->sendMessage(TF::RED . "You have no permission to use this command!");
-                }
-                
-                if(!isset($args[1])) {
-                    $sender->sendMessage($this->onHelp($sender));
-                }
-                
-                if($args[1] === "{player}") {
+                if(isset($args[0])) {
                     
-                    if($args[2] === "event") {
+                    switch($args[0]) {
                         
-                        if($args[3] === "join") {
+                        case "all":
                             
-                            $line = $args[3];
+                            if(isset($args[1])) {
+                                
+                                switch($args[1]) {
+                                    
+                                    case "event":
+                                        
+                                        if(isset($args[2])) {
+                                            
+                                            switch($args[2]) {
+                                                
+                                                case "join":
+                                                    
+                                                    if(isset($args[3])) {
+                                                        
+                                                        $cfg = $this->config->getAll();
+                                                        $line = implode(" ", array_splice($args, 3));
+                                                        
+                                                        $this->config->set('jcmd', $line);
+                                                        $this->config->save();
+                                                        $this->getLogger()->warning("saved!");
+                                                         
+                                                    }
+                                                    else {
+                                                        $this->args($sender);
+                                                    }
+                                                    
+                                            }
+                                            
+                                        }
+                                        else {
+                                            $this->args($sender);
+                                        }
+                                        
+                                }
+                                
+                                
+                            }
+                            else {
+                                $this->args($sender);
+                            }
                             
-                            $this->getConfig()->set("jcmd", $line);
-                            $this->getConfig()->save();
-                            
-                        }
-                        else {
-                            $this->onHelp($sender);
-                        }
-
                     }
-                    else {
-                        $this->onHelp($sender);
-                    }
-                    
+                       
                 }
                 else {
-                    $this->onHelp($sender);
+                    $this->args($sender);
                 }
-                
+            
         }
         
     }
     
-    public function onHelp($p) {
+    public function args($p) {
         
-        $p->sendMessage(TF::YELLOW . "-- HELP --");
+        $p->sendMessage(" -- Invalid Args -- ");
+        $p->sendMessage("/if [all or player name] event [join] [what to do?]");
         
     }
     
