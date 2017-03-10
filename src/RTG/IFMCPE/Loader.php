@@ -38,7 +38,10 @@ class Loader extends PluginBase implements Listener {
         
         $this->getServer()->getPluginManager()->registerEvents($this, $this);
         $this->saveDefaultConfig();
-        $this->config = new Config($this->getDataFolder() . "config.yml");
+        @mkdir($this->getDataFolder());
+        $this->config = new Config($this->getDataFolder() . "config.yml", Config::YAML, array(
+            "jcmd" => array()
+        ));
         
     }
     
@@ -61,58 +64,53 @@ class Loader extends PluginBase implements Listener {
             
             case "if":
                 
-                if(isset($args[0])) {
+                if($sender->isOp() or $sender->hasPermission("ifmcpe.command")) {
                     
-                    switch($args[0]) {
+                    if(isset($args[0])) {
                         
-                        case "all":
+                        switch (strtolower($args[0])) {
                             
-                            if(isset($args[1])) {
+                            case "event":
                                 
-                                switch($args[1]) {
+                                if(isset($args[1])) {
                                     
-                                    case "event":
+                                    switch(strtolower($args[1])) {
                                         
-                                        if(isset($args[2])) {
+                                        case "join":
                                             
-                                            switch($args[2]) {
+                                            if(isset($args[2])) {
                                                 
-                                                case "join":
-                                                    
-                                                    if(isset($args[3])) {
-                                                        
-                                                        $cfg = $this->config->getAll();
-                                                        $line = implode(" ", array_splice($args, 3));
-                                                        
-                                                        $this->config->set('jcmd', $line);
-                                                        $this->config->save();
-                                                        $this->getLogger()->warning("saved!");
-                                                         
-                                                    }
-                                                    else {
-                                                        $this->args($sender);
-                                                    }
-                                                    
+                                                $c = $this->config->get("jcmd");
+                                                $d = implode(" ", array_splice($args, 2));
+                                                
+                                                array_push($c, $d);
+                                                
+                                                $this->config->set('jcmd', $c);
+                                                $this->config->save();
+                                                $sender->sendMessage("Added!");
+                                                
                                             }
-                                            
-                                        }
-                                        else {
-                                            $this->args($sender);
-                                        }
+                                            else {
+                                                $this->args($sender);
+                                            }
                                         
+                                    }
+                                      
                                 }
-                                
-                                
-                            }
-                            else {
-                                $this->args($sender);
-                            }
+                                else {
+                                    $this->args($sender);
+                                }
                             
+                        }
+                          
                     }
-                       
+                    else {
+                        $this->args($sender);
+                    }
+                      
                 }
                 else {
-                    $this->args($sender);
+                    $sender->sendMessage(TF::RED . "You have no permission to use this command!");
                 }
             
         }
@@ -122,12 +120,12 @@ class Loader extends PluginBase implements Listener {
     public function args($p) {
         
         $p->sendMessage(" -- Invalid Args -- ");
-        $p->sendMessage("/if [all or player name] event [join] [what to do?]");
+        $p->sendMessage("/if event [join] [what to do?]");
         
     }
     
     public function onDisable() {
-        $this->getConfig()->save();
+        $this->config()->save();
     }
     
 }
